@@ -34,8 +34,8 @@ public static class Router
 
             Log.Debug($"Running router script '{WolScriptName}' ({scriptId})...");
             
-            var runScriptCommand = connection.CreateCommand(
-                $"/system/script/run", connection.CreateParameter("=.id=", scriptId)
+            var runScriptCommand = connection.CreateCommandAndParameters(
+                "/system/script/run", TikSpecialProperties.Id, scriptId
             );
             _ = runScriptCommand.ExecuteList().ToList();
 
