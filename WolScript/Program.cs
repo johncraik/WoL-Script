@@ -5,9 +5,16 @@ const ushort maxTries = 3;
 
 Log.Info("=== Wake-on-LAN Tool ===", true);
 
-// Load or prompt for configuration
-Config.Initialise();
-Config.Display();
+var changeConfig = true;
+while (changeConfig)
+{
+    // Load or prompt for configuration
+    Config.Initialise();
+    Config.Display();
+    
+    changeConfig = Input.SendConfirm("Do you want to change configuration?", false);
+    if (changeConfig) Config.Reconfigure();
+}
 
 // Perform initial check if PC is online
 // Exits script if user does not want to check PC (must perform TCP check before WoL)
@@ -15,7 +22,7 @@ var check = Input.SendConfirm($"Do you want to check if the PC ({Config.PcIp}) i
 if (!check) return;
 
 // Check PC status
-var result = TCP.IsOnline();
+var result = await TCP.IsOnline();
 if (result.Success || result.Refused)
 {
     // Exit when PC is online or refused connection
@@ -43,7 +50,7 @@ while (result.TimedOut && tries < maxTries)
     Log.Info($"Waiting {delaySeconds} seconds for PC ({Config.PcIp}) to boot...");
     await Task.Delay(delaySeconds * 1000);
 
-    var res = TCP.IsOnline();
+    var res = await TCP.IsOnline();
     if (!res.TimedOut)
     {
         // Exit loop if PC is online, refused connection, or error

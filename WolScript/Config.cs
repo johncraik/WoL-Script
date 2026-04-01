@@ -96,7 +96,7 @@ public static class Config
         foreach (var entry in Entries)
         {
             Log.Debug($"Clearing {entry.Prompt} value from environment variables...");
-            SetEnvVar(entry.Key, null!);
+            SetEnvVar(entry.Key, null);
         }
 
         Log.Success("Configuration cleared from environment variables.", true);
@@ -123,7 +123,7 @@ public static class Config
         return Environment.GetEnvironmentVariable($"{EnvPrefix}{key}", EnvironmentVariableTarget.User);
     }
 
-    private static void SetEnvVar(string key, string value)
+    private static void SetEnvVar(string key, string? value)
     {
         Environment.SetEnvironmentVariable($"{EnvPrefix}{key}", value, EnvironmentVariableTarget.User);
         // Also set in current process so it's available immediately
