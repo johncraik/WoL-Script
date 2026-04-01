@@ -18,7 +18,7 @@ public static class Router
 
         try
         {
-            Log.Info("Connecting to router REST API...");
+            Log.Debug("Connecting to router REST API...");
 
             using var client = new HttpClient();
 
@@ -30,7 +30,7 @@ public static class Router
 
             client.Timeout = TimeSpan.FromSeconds(10);
 
-            var url = $"https://{Config.RouterIp}/rest/system/script/run";
+            var url = $"http://{Config.RouterIp}/rest/system/script/run";
 
             // Try by script name first
             var payload = new Dictionary<string, string>()
