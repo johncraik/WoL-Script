@@ -20,17 +20,14 @@ public static class Router
             connection.Open(Config.RouterIp, Config.ApiUser, Config.ApiPassword);
             
             Log.Debug($"Looking up script '{WolScriptName}'...");
-            var findScriptCommand = connection.CreateCommand(
-                "/system/script/print",
-                connection.CreateParameter(".proplist", ".id,name"),
-                connection.CreateParameter("?name", WolScriptName)
-            );
+            var findScriptCommand = connection.CreateCommand("/system/script/print");
 
             var scriptRows = findScriptCommand.ExecuteList().ToList();
             if(scriptRows.Count == 0)
                 throw new Exception($"Router script '{WolScriptName}' was not found.");
             
-            var scriptId = scriptRows[0].GetResponseField(".id");
+            var scriptId = scriptRows.FirstOrDefault(s => s.GetResponseField("name") == WolScriptName)
+                ?.GetResponseField(".id")?.ToString();
             
             if (string.IsNullOrWhiteSpace(scriptId))
                 throw new Exception($"Router script '{WolScriptName}' did not return a valid .id.");
@@ -38,8 +35,7 @@ public static class Router
             Log.Debug($"Running router script '{WolScriptName}' ({scriptId})...");
             
             var runScriptCommand = connection.CreateCommand(
-                "/system/script/run",
-                connection.CreateParameter(".id", scriptId)
+                $"/system/script/run", connection.CreateParameter("=.id=", scriptId)
             );
             _ = runScriptCommand.ExecuteList().ToList();
 
