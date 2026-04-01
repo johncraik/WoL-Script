@@ -34,7 +34,7 @@ if (result.Success || result.Refused)
 check = Input.SendConfirm($"Do you want to wake PC ({Config.PcIp}) on LAN?");
 if (!check) return;
 
-if (!Router.SendWakeOnLan())
+if (!await Router.SendWakeOnLan())
 {
     // Exit if WoL fails
     Log.Exit();

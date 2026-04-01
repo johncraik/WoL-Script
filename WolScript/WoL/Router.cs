@@ -1,4 +1,6 @@
-using tik4net;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace WolScript.WoL;
 
@@ -9,35 +11,41 @@ public static class Router
     /// <summary>
     /// Connects to the router via the API and runs the WoL script.
     /// </summary>
-    public static bool SendWakeOnLan()
+    public static async Task<bool> SendWakeOnLan()
     {
         Log.Info("Sending Wake-on-LAN command...");
         Log.Debug($"Connecting to router at {Config.RouterIp}...");
 
         try
         {
-            using var connection = ConnectionFactory.CreateConnection(TikConnectionType.Api);
-            connection.Open(Config.RouterIp, Config.ApiUser, Config.ApiPassword);
-            
-            Log.Debug($"Looking up script '{WolScriptName}'...");
-            var findScriptCommand = connection.CreateCommand("/system/script/print");
+            Log.Info("Connecting to router REST API...");
 
-            var scriptRows = findScriptCommand.ExecuteList().ToList();
-            if(scriptRows.Count == 0)
-                throw new Exception($"Router script '{WolScriptName}' was not found.");
-            
-            var scriptId = scriptRows.FirstOrDefault(s => s.GetResponseField("name") == WolScriptName)
-                ?.GetResponseField(".id")?.ToString();
-            
-            if (string.IsNullOrWhiteSpace(scriptId))
-                throw new Exception($"Router script '{WolScriptName}' did not return a valid .id.");
+            using var client = new HttpClient();
 
-            Log.Debug($"Running router script '{WolScriptName}' ({scriptId})...");
-            
-            var runScriptCommand = connection.CreateCommandAndParameters(
-                "/system/script/run", TikSpecialProperties.Id, scriptId
-            );
-            _ = runScriptCommand.ExecuteList().ToList();
+            var auth = Convert.ToBase64String(
+                Encoding.ASCII.GetBytes($"{Config.ApiUser}:{Config.ApiPassword}"));
+
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Basic", auth);
+
+            client.Timeout = TimeSpan.FromSeconds(10);
+
+            var url = $"https://{Config.RouterIp}/rest/system/script/run";
+
+            // Try by script name first
+            var payload = new Dictionary<string, string>()
+            {
+                [".id"] = WolScriptName
+            };
+
+            var json = JsonSerializer.Serialize(payload);
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync(url, content);
+            var body = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"HTTP {(int)response.StatusCode}: {body}");
 
             Log.Success("Wake-on-LAN command sent successfully!", true);
             return true;
