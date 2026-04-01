@@ -19,10 +19,29 @@ public static class Router
             using var connection = ConnectionFactory.CreateConnection(TikConnectionType.Api);
             connection.Open(Config.RouterIp, Config.ApiUser, Config.ApiPassword);
             
-            Log.Debug($"Connected. Running script '{WolScriptName}'...");
+            Log.Debug($"Looking up script '{WolScriptName}'...");
+            var findScriptCommand = connection.CreateCommand(
+                "/system/script/print",
+                connection.CreateParameter(".proplist", ".id,name"),
+                connection.CreateParameter("?name", WolScriptName)
+            );
+
+            var scriptRows = findScriptCommand.ExecuteList().ToList();
+            if(scriptRows.Count == 0)
+                throw new Exception($"Router script '{WolScriptName}' was not found.");
             
-            var command = connection.CreateCommand($"/system/script/run .id={WolScriptName}");
-            command.ExecuteNonQuery();
+            var scriptId = scriptRows[0].GetResponseField(".id");
+            
+            if (string.IsNullOrWhiteSpace(scriptId))
+                throw new Exception($"Router script '{WolScriptName}' did not return a valid .id.");
+
+            Log.Debug($"Running router script '{WolScriptName}' ({scriptId})...");
+            
+            var runScriptCommand = connection.CreateCommand(
+                "/system/script/run",
+                connection.CreateParameter(".id", scriptId)
+            );
+            _ = runScriptCommand.ExecuteList().ToList();
 
             Log.Success("Wake-on-LAN command sent successfully!", true);
             return true;
