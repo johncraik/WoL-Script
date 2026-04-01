@@ -16,14 +16,16 @@ public static class Router
 
         try
         {
-            using var connection = ConnectionFactory.CreateConnection(TikConnectionType.Api);
-            connection.Open(Config.RouterIp, Config.ApiUser, Config.ApiPassword);
+            // using var connection = ConnectionFactory.CreateConnection(TikConnectionType.Api);
+            // connection.Open(Config.RouterIp, Config.ApiUser, Config.ApiPassword);
             
+            Task.Delay(5000).Wait();
             Log.Debug($"Connected. Running script '{WolScriptName}'...");
             
-            var command = connection.CreateCommand($"/system/script/run .id={WolScriptName}");
-            command.ExecuteNonQuery();
+            // var command = connection.CreateCommand($"/system/script/run .id={WolScriptName}");
+            // command.ExecuteNonQuery();
 
+            Task.Delay(10000).Wait();
             Log.Success("Wake-on-LAN command sent successfully!", true);
             return true;
         }

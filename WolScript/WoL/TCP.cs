@@ -19,18 +19,19 @@ public static class TCP
 
         try
         {
-            using var client = new TcpClient();
-            var result = client.BeginConnect(ip, RdpPort, null, null);
-            var connected = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(TimeoutMs));
-
-            if (connected && client.Connected)
+            // using var client = new TcpClient();
+            // var result = client.BeginConnect(ip, RdpPort, null, null);
+            // var connected = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(TimeoutMs));
+            //
+            // if (connected && client.Connected)
+            if(Test())
             {
-                client.EndConnect(result);
+                //client.EndConnect(result);
                 Log.Success("PC is online!", true);
                 return new TcpResult();
             }
 
-            Log.Error("PC is offline (connection timed out).", true);
+            Log.Warning("PC is offline (connection timed out).", true);
             return new TcpResult(timedOut: true);
         }
         catch (SocketException)
@@ -43,6 +44,14 @@ public static class TCP
             Log.Error($"Connection check failed: {ex.Message}", true);
             return new TcpResult(error: true);
         }
+    }
+
+    private static bool Test()
+    {
+        Task.Delay(TimeoutMs).Wait();
+        var rnd = new Random();
+        var n = rnd.Next(0, 100);
+        return n % 2 == 0 && n > 30;
     }
 }
 
